@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1920x1080 화면</title>
+    <style>
+        @font-face {
+            font-family: 'DNFBitBit';
+            src: url('https://raw.githubusercontent.com/yunrang2/upload/master/DNFBitBitv2.ttf') format('truetype');
+        }
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #00FF00; /* 크로마키 녹색 */
+            height: 100vh;
+            overflow: hidden; /* 스크롤 방지 */
+            font-family: 'DNFBitBit', Arial, sans-serif;
+        }
+        .canvas {
+            position: relative;
+            width: 1920px;
+            height: 1080px;
+            background-color: #00FF00; /* 동일한 크로마키 녹색 */
+        }
+        .top-left {
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .top-left img {
+            width: 470px; /* 가로 크기 50px 증가 */
+            height: auto;
+            cursor: pointer;
+        }
+        .button-row {
+            display: flex;
+            justify-content: space-between; /* 버튼 간격을 동일하게 조정 */
+            width: 470px; /* 버튼 행의 너비를 이미지와 맞춤 */
+        }
+        .button-row button {
+            background-color: #FF69B4; /* 왼쪽 버튼 색상 */
+            border: 2px solid #000; /* 테두리 추가 */
+            color: white;
+            padding: 5px 10px;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+            font-size: 18px;
+            cursor: pointer;
+            width: 31%; /* 각 버튼의 너비를 이미지 크기와 맞춤 */
+            font-family: 'DNFBitBit', Arial, sans-serif;
+            box-shadow: 0 4px #666;
+            border-radius: 5px;
+            transition: transform 0.2s ease;
+            text-shadow: 1px 1px 1px #000;
+        }
+        .button-row button:hover {
+            transform: translateY(-4px);
+        }
+        .button-row button span {
+            text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000;
+        }
+        .bottom-right {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+        .bottom-right button {
+            background-color: #FF1493; /* 오른쪽 버튼 색상 */
+            border: 2px solid #000; /* 테두리 추가 */
+            color: white;
+            padding: 22px 33px;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+            font-size: 27px;
+            cursor: pointer;
+            width: 210px;
+            font-family: 'DNFBitBit', Arial, sans-serif;
+            box-shadow: 0 4px #666;
+            border-radius: 11px;
+            transition: width 0.3s ease, transform 0.2s ease;
+            position: relative;
+            white-space: nowrap;
+            text-shadow: 1px 1px 1px #000;
+            margin-bottom: 10px; /* 버튼 간격 추가 */
+        }
+        .bottom-right button:hover {
+            width: 345px;
+        }
+        .bottom-right button span {
+            text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000;
+        }
+        .dynamic-buttons {
+            position: absolute;
+            top: 0;
+            right: 0;
+            display: none;
+            flex-direction: column;
+            align-items: flex-end;
+            z-index: 1000;
+        }
+        .dynamic-buttons .button-row {
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-end;
+        }
+        .dynamic-buttons button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 18px;
+            border: 2px solid #000; /* 테두리 추가 */
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'DNFBitBit', Arial, sans-serif;
+            text-shadow: 1px 1px 1px #000;
+        }
+        .dynamic-buttons .bgm-button {
+            background-color: #FF69B4; /* 브금 버튼 분홍색 */
+            color: white;
+        }
+        .dynamic-buttons .reaction-button {
+            background-color: #FF69B4;
+            color: white;
+        }
+        .dynamic-buttons .stop-button {
+            background-color: red; /* 중지 버튼 빨간색 */
+            color: white;
+        }
+        .dynamic-buttons .close-button {
+            background-color: #FF4500;
+            color: white;
+        }
+        .return-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #FF4500;
+            color: white;
+            padding: 10px 20px;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none;
+            z-index: 1000;
+            font-family: 'DNFBitBit', Arial, sans-serif;
+            text-shadow: 1px 1px 1px #000;
+        }
+        .timer-box {
+            display: none;
+            position: fixed;
+            background-color: white;
+            border: 2px solid #000;
+            padding: 22px;
+            font-size: 44px;
+            font-family: 'DNFBitBit', Arial, sans-serif;
+            text-align: center;
+            z-index: 1000;
+            cursor: pointer;
+        }
+        .timer-box.vibrate {
+            animation: vibrate 0.1s infinite;
+        }
+        @keyframes vibrate {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-2px); }
+            50% { transform: translateX(2px); }
+            75% { transform: translateX(-2px); }
+            100% { transform: translateX(2px); }
+        }
+        .modal {
+            display: none;
+            position: absolute;
+            width: 470px; /* 왼쪽 버튼 모달창 크기 */
+            height: auto;
+            bottom: 0;
+            left: 0;
+            background-color: white;
+            border: 2px solid #666;
+            box-shadow: 0 4px 11px rgba(0,0,0,0.2);
+            border-radius: 11px;
+            padding: 22px;
+            z-index: 1000;
+            font-family: 'DNFBitBit', Arial, sans-serif;
+            text-align: center;
+        }
+        .modal.active {
+            display: block;
+        }
+        .input-timer-modal {
+            display: none;
+            position: absolute;
+            width: 300px; /* 직접 설정 모달창 크기 */
+            height: auto;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            border: 2px solid #666;
+            box-shadow: 0 4px 11px rgba(0,0,0,0.2);
+            border-radius: 11px;
+            padding: 20px;
+            z-index: 1000;
+            font-family: 'DNFBitBit', Arial, sans-serif;
+            text-align: center;
+        }
+        .input-timer-modal.active {
+            display: block;
+        }
+        .input-timer {
+            width: 60px;
+            padding: 10px;
+            font-size: 18px;
+            margin: 0 5px;
+            text-align: center;
+            border-radius: 5px;
+            border: 2px solid #666;
+        }
+        .modal-title {
+            color: #FF69B4;
+            font-size: 36px;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 2px #000;
+            -webkit-text-stroke: 1px black; /* 진한 검은색 테두리 */
+        }
+        .modal-content {
+            font-size: 24px;
+            text-shadow: 1px 1px 2px #000;
+            color: #FFFFFF; /* 흰색 텍스트 */
+            -webkit-text-stroke: 1px black; /* 진한 검은색 테두리 */
+        }
+        .modal-content .heart {
+            color: red;
+        }
+        .disco-light {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: #fff;
+            border-radius: 50%;
+            animation: blink 1s infinite alternate;
+        }
+        .chicken-img {
+            position: absolute;
+            width: 300px;
+            animation: dance 2s infinite alternate;
+        }
+        .chicken-img.left {
+            bottom: 0;
+            left: 0;
+        }
+        .chicken-img.right {
+            bottom: 0;
+            right: 0;
+        }
+        @keyframes dance {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-20px); }
+        }
+        @keyframes blink {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        .waiting-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2000;
+            background-color: rgba(0, 0, 0, 0.8);
+            cursor: pointer;
+        }
+        .waiting-screen img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+    </style>
+    <script>
+        let timers = [];
+        let timerPositions = [
+            { top: '33px', left: '30%' },
+            { top: '33px', left: '50%' },
+            { top: '33px', left: '70%' }
+        ];
+        let currentPosition = 0;
+        let currentAudio = null;
+        let contentVisible = true;
+        let bgMusic = null;
+
+        function toggleModal(modalId) {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                if (modal.id !== modalId) {
+                    modal.classList.remove('active');
+                }
+            });
+            const modal = document.getElementById(modalId);
+            modal.classList.toggle('active');
+        }
+
+        function showDynamicButtons(type) {
+            const existingContainer = document.getElementById('dynamic-buttons');
+            if (existingContainer && existingContainer.dataset.type === type) {
+                existingContainer.remove();
+                return;
+            }
+
+            removeDynamicButtons();
+
+            const buttonContainer = document.createElement('div');
+            buttonContainer.className = 'dynamic-buttons';
+            buttonContainer.id = 'dynamic-buttons';
+            buttonContainer.dataset.type = type;
+
+            let buttons = [];
+            if (type === 'bgm') {
+                buttons = [
+                    { text: '섹시', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/섹시.mp3' },
+                    { text: '불쌍', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/불쌍.mp3' },
+                    { text: '게임', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/게임.mp3' },
+                    { text: '원투', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/원투.mp3' },
+                    { text: '코난', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/코난등장.mp3' },
+                    { text: '황당', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/황당.mp3' },
+                    { text: '멸망', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/멸망.mp3' },
+                    { text: '반야심경', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/반야심경리믹스.mp3' },
+                    { text: '중지', action: stopAudio }
+                ];
+            } else if (type === 'reaction') {
+                buttons = [
+                    { text: '사쿠란보', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/사쿠란보.mp3' },
+                    { text: '마라탕후루', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/마라탕후루.mp3' },
+                    { text: '솜사탕', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/솜사탕.mp3' },
+                    { text: '제로투', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/제로투.mp3' },
+                    { text: '코카인', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/코카인.mp3' },
+                    { text: '제로콕', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/제로콕.mp3' },
+                    { text: '여봉봉', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/여봉봉.mp3' },
+                    { text: '뿌에', action: playPpuwe },
+                    { text: '중지', action: stopAudio }
+                ];
+            } else if (type === 'timer') {
+                buttons = [
+                    { text: '20초', action: () => createTimer(20) }, /* 20초 타이머 추가 */
+                    { text: '30초', action: () => createTimer(30) },
+                    { text: '1분', action: () => createTimer(60) },
+                    { text: '30분', action: () => createTimer(1800) }, /* 10분 타이머를 30분으로 변경 */
+                    { text: '직접 설정', action: openCustomTimerModal }
+                ];
+            }
+
+            buttons.forEach((btn, index) => {
+                const button = document.createElement('button');
+                button.className = btn.className || (type === 'bgm' ? 'bgm-button' : 'reaction-button');
+                button.innerText = btn.text;
+                if (btn.audio) {
+                    button.onclick = () => playAudio(btn.audio);
+                } else if (btn.action) {
+                    button.onclick = btn.action;
+                }
+
+                if (index % 2 === 0) {
+                    const row = document.createElement('div');
+                    row.className = 'button-row';
+                    buttonContainer.appendChild(row);
+                    row.appendChild(button);
+                } else {
+                    buttonContainer.lastChild.appendChild(button);
+                }
+            });
+
+            document.body.appendChild(buttonContainer);
+            buttonContainer.style.display = 'flex';
+        }
+
+        function removeDynamicButtons() {
+            const existingContainer = document.getElementById('dynamic-buttons');
+            if (existingContainer) {
+                existingContainer.remove();
+            }
+        }
+
+        function toggleContentVisibility() {
+            const elements = document.querySelectorAll('.top-left, .bottom-right, .modal, .dynamic-buttons, .timer-box');
+            elements.forEach(element => {
+                if (!element.classList.contains('return-button')) {
+                    element.style.display = contentVisible ? 'none' : '';
+                }
+            });
+            document.getElementById('return-button').style.display = contentVisible ? 'block' : 'none';
+            contentVisible = !contentVisible;
+        }
+
+        function createTimer(duration) {
+            let timer = timers.find(t => t.duration === duration);
+            if (timer) {
+                timer.remaining += duration;
+                timer.element.textContent = formatTime(timer.remaining);
+                return;
+            }
+
+            let timerBox = document.createElement('div');
+            timerBox.className = 'timer-box';
+            timerBox.dataset.duration = duration;
+            timerBox.style.top = timerPositions[currentPosition].top;
+            timerBox.style.left = timerPositions[currentPosition].left;
+            document.body.appendChild(timerBox);
+            currentPosition = (currentPosition + 1) % timerPositions.length;
+
+            timerBox.style.display = 'block';
+            timerBox.textContent = formatTime(duration);
+
+            timer = {
+                element: timerBox,
+                duration: duration,
+                remaining: duration,
+                interval: null,
+                active: true
+            };
+            timers.push(timer);
+
+            timerBox.onclick = () => {
+                if (timer.active) {
+                    clearInterval(timer.interval);
+                } else {
+                    startTimer(timer);
+                }
+                timer.active = !timer.active;
+            };
+
+            startTimer(timer);
+        }
+
+        function startTimer(timer) {
+            if (timer.interval) {
+                clearInterval(timer.interval);
+            }
+            timer.interval = setInterval(() => {
+                if (timer.remaining > 0) {
+                    timer.remaining--;
+                    timer.element.textContent = formatTime(timer.remaining);
+
+                    if (timer.remaining <= 5) {
+                        timer.element.classList.add('vibrate');
+                        timer.element.style.backgroundColor = timer.remaining % 2 === 0 ? 'red' : 'white';
+                    } else {
+                        timer.element.classList.remove('vibrate');
+                        timer.element.style.backgroundColor = 'white';
+                    }
+                } else {
+                    clearInterval(timer.interval);
+                    timer.element.style.display = 'none';
+                }
+            }, 1000);
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+
+        function playAudio(src) {
+            if (currentAudio && currentAudio.src !== src) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+            }
+            if (!currentAudio || currentAudio.src !== src) {
+                currentAudio = new Audio(src);
+            }
+            currentAudio.loop = true;  // 반복 재생 설정
+            currentAudio.volume = 0.8;
+            currentAudio.play();
+        }
+
+        function stopAudio() {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                currentAudio = null;
+            }
+            if (bgMusic) {
+                bgMusic.pause();
+                bgMusic.currentTime = 0;
+                bgMusic = null;
+            }
+        }
+
+        function hideContent() {
+            const elements = document.querySelectorAll(".top-left, .bottom-right, .modal, .dynamic-buttons, .timer-box");
+            elements.forEach(element => element.style.display = "none");
+            document.getElementById("return-button").style.display = "block";
+        }
+
+        function removeDynamicElements() {
+            const lights = document.querySelectorAll('.disco-light');
+            const chickens = document.querySelectorAll('.chicken-img');
+            const timers = document.querySelectorAll('.timer-box');
+
+            lights.forEach(light => light.remove());
+            chickens.forEach(chicken => chicken.remove());
+            timers.forEach(timer => timer.remove());
+        }
+
+        function playPpuwe() {
+            hideContent();
+
+            const duration = 1 * 60 + 9; // 1분 9초
+            createTimer(duration);
+
+            playAudio('https://raw.githubusercontent.com/yunrang2/upload/master/뿌에.mp3');
+        }
+
+        function openCustomTimerModal() {
+            toggleModal('input-timer-modal');
+        }
+
+        function setCustomTimer() {
+            const minutes = parseInt(document.getElementById('custom-minutes').value, 10);
+            const seconds = parseInt(document.getElementById('custom-seconds').value, 10);
+            const duration = (minutes * 60) + seconds;
+            toggleModal('input-timer-modal');
+            createTimer(duration);
+        }
+
+        function showWaitingScreen() {
+            const waitingScreen = document.getElementById('waiting-screen');
+            waitingScreen.style.display = 'flex';
+        }
+
+        function hideWaitingScreen() {
+            const waitingScreen = document.getElementById('waiting-screen');
+            waitingScreen.style.display = 'none';
+        }
+    </script>
+</head>
+<body>
+    <div class="canvas">
+        <div class="top-left">
+            <img src="https://raw.githubusercontent.com/yunrang2/upload/master/츄리%20미션판.png" alt="미션판" onclick="toggleContentVisibility()">
+            <div class="button-row">
+                <button id="profile-btn" onclick="toggleModal('profile-modal')"><span>프로필</span></button>
+                <button id="schedule-btn" onclick="toggleModal('schedule-modal')"><span>방송시간</span></button>
+                <button id="signature-btn" onclick="toggleModal('signature-modal')"><span>시그니처</span></button>
+            </div>
+        </div>
+        <div class="bottom-right">
+            <button id="waiting-btn" onclick="showWaitingScreen()"><span>대기 화면</span></button>
+            <button id="timer-btn" onclick="showDynamicButtons('timer')"><span>타이머</span></button>
+            <button id="bgm-btn" onclick="showDynamicButtons('bgm')"><span>브금</span></button>
+            <button id="reaction-btn" onclick="showDynamicButtons('reaction')"><span>리액션</span></button>
+        </div>
+        <button id="return-button" class="return-button" onclick="toggleContentVisibility()">돌아가기</button>
+        <div id="waiting-screen" class="waiting-screen" onclick="hideWaitingScreen()">
+            <img src="https://raw.githubusercontent.com/yunrang2/upload/master/츄리%20방종.png" alt="대기 화면">
+        </div>
+        <div id="profile-modal" class="modal">
+            <div class="modal-title">츄리 프로필</div>
+            <div class="modal-content">✨나이:26살✨키:154cm</div>
+            <div class="modal-content">✨몸무게:이쁜만큼✨미드:살쪄서D</div>
+            <div class="modal-content">✨특징:볼매✨혈액형:A형</div>
+            <div class="modal-content">✨사는곳:부산✨팬가입 10콘</div>
+            <div class="modal-content">🦥MBTI- ESFP🦥</div>
+        </div>
+        <div id="schedule-modal" class="modal">
+            <div class="modal-title">츄리 방송시간</div>
+            <div class="modal-content" style="text-align: center; font-size: 36px;">방송시간 랜덤</div>
+            <div class="modal-content" style="text-align: center; font-size: 36px;">즐찾필수!</div>
+        </div>
+        <div id="signature-modal" class="modal">
+            <div class="modal-title">츄리 시그니처<span class="heart">♥</span></div>
+            <div class="modal-content">72<span class="heart">♥</span>,172<span class="heart">♥</span>,282<span class="heart">♥</span>,</div>
+            <div class="modal-content">472<span class="heart">♥</span>,1172<span class="heart">♥</span>,1472<span class="heart">♥</span>,</div>
+            <div class="modal-content">2872<span class="heart">♥</span>,10072<span class="heart">♥</span></div>
+        </div>
+        <div id="input-timer-modal" class="input-timer-modal">
+            <div class="modal-title">타이머 직접 설정</div>
+            <input id="custom-minutes" class="input-timer" type="number" placeholder="분" min="0">
+            <input id="custom-seconds" class="input-timer" type="number" placeholder="초" min="0" max="59">
+            <button onclick="setCustomTimer()"><span>설정</span></button>
+        </div>
+    </div>
+</body>
+</html>
